@@ -38,7 +38,9 @@ class Sprites {
   }
 
   void removeSprite(int index) {
-    sprites.removeAt(index);
+    if (index >= 0 && index < sprites.length) {
+      sprites.removeAt(index);
+    }
   }
 
   void addSprite(Sprite sprite) {
@@ -71,6 +73,10 @@ class Sprites {
   }
   int getSize() {
     return sprites.length;
+  }
+
+  void clear() {
+    sprites.clear();
   }
 }
 

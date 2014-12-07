@@ -58,7 +58,6 @@ Shader testShader = new Shader(
   void main() { 
     vec4 col = texture2D(u_tex, v_uv);
     if (col.a<0.5) discard;
-//    gl_FragColor = vec4(1.0, 1.0, 1.0, );
     gl_FragColor = col*v_col;
   }
 """);
