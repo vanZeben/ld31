@@ -16,6 +16,7 @@ class Sprites {
   GL.UniformLocation viewMatrixLocation;
   Float32List vertexData = new Float32List(MAX_VERTICES*FLOATS_PER_VERTEX);
   Sprites(this.shader, this.texture) {
+    shader.use();
     vertexBuffer = gl.createBuffer();
     gl.bindBuffer(GL.ARRAY_BUFFER, vertexBuffer);
     gl.bufferDataTyped(GL.ARRAY_BUFFER, vertexData, GL.DYNAMIC_DRAW);
@@ -30,11 +31,14 @@ class Sprites {
     gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferDataTyped(GL.ELEMENT_ARRAY_BUFFER, indexData, GL.STATIC_DRAW);
 
-    shader.use();
     posLocation = gl.getAttribLocation(shader.program, "a_pos");
     uvLocation = gl.getAttribLocation(shader.program, "a_uv");
     rgbLocation = gl.getAttribLocation(shader.program, "a_col");
     viewMatrixLocation = gl.getUniformLocation(shader.program, "u_viewMatrix");
+  }
+
+  void removeSprite(int index) {
+    sprites.removeAt(index);
   }
 
   void addSprite(Sprite sprite) {
@@ -42,20 +46,18 @@ class Sprites {
   }
 
   void render(Matrix4 viewMatrix) {
-    gl.bindTexture(GL.TEXTURE_2D, texture);
     shader.use();
-
-
+    gl.bindTexture(GL.TEXTURE_2D, texture);
     gl.bindBuffer(GL.ARRAY_BUFFER, vertexBuffer);
+
     int toReplace = sprites.length;
     if (toReplace>MAX_SPRITES) toReplace = MAX_SPRITES;
     for (int i =0; i<toReplace;i++) {
       sprites[i].set(vertexData,  i*FLOATS_PER_VERTEX*4);
     }
+
     gl.bufferSubDataTyped(GL.ARRAY_BUFFER, 0, vertexData.sublist(0, toReplace*FLOATS_PER_VERTEX*4) as Float32List);
-
     gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix.storage);
-
     gl.enableVertexAttribArray(posLocation);
     gl.enableVertexAttribArray(uvLocation);
     gl.enableVertexAttribArray(rgbLocation);
@@ -66,6 +68,9 @@ class Sprites {
 
     gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.drawElements(GL.TRIANGLES, sprites.length*6, GL.UNSIGNED_SHORT, 0);
+  }
+  int getSize() {
+    return sprites.length;
   }
 }
 
@@ -81,17 +86,17 @@ class Sprite {
   void set(Float32List data, int offs) {
     if (!flip) {
       data.setAll(offs, [
-        x+0, y+0, u+0, v+0, r, g, b, a,
-        x+w, y+0, u+w, v+0, r, g, b, a,
-        x+w, y+h, u+w, v+h, r, g, b, a,
-        x+0, y+h, u+0, v+h, r, g, b, a,
+        x+0, y+0, (u*w)+0, (v*h)+0, r, g, b, a,
+        x+w, y+0, (u*w)+w, (v*h)+0, r, g, b, a,
+        x+w, y+h, (u*w)+w, (v*h)+h, r, g, b, a,
+        x+0, y+h, (u*w)+0, (v*h)+h, r, g, b, a,
       ]);
     } else {
       data.setAll(offs, [
-        x+0, y+0, u+w, v+0, r, g, b, a,
-        x+w, y+0, u+0, v+0, r, g, b, a,
-        x+w, y+h, u+0, v+h, r, g, b, a,
-        x+0, y+h, u+w, v+h, r, g, b, a,
+        x+0, y+0, (u*w)+w, (v*h)+0, r, g, b, a,
+        x+w, y+0, (u*w)+0, (v*h)+0, r, g, b, a,
+        x+w, y+h, (u*w)+0, (v*h)+h, r, g, b, a,
+        x+0, y+h, (u*w)+w, (v*h)+h, r, g, b, a,
       ]);
     }
   }
