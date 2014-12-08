@@ -38,12 +38,13 @@ class Sprites {
   }
 
   void removeSprite(int index) {
-    if (index >= 0 && index < sprites.length) {
-      sprites.removeAt(index);
-    }
+    if (index < 0 || index > sprites.length) { return; }
+    sprites.removeAt(index);
   }
 
   void addSprite(Sprite sprite) {
+    if (sprite == null) { return; }
+    sprite.index = sprites.length;
     sprites.add(sprite);
   }
 
@@ -77,6 +78,7 @@ class Sprites {
 
   void clear() {
     sprites.clear();
+    vertexData = new Float32List(MAX_VERTICES*FLOATS_PER_VERTEX);
   }
 }
 

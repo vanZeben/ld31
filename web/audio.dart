@@ -44,7 +44,11 @@ class Audio {
   static const buffersToLoad = const {
     "hit" : "sfx/hit.wav",
     "walk" : "sfx/walk.wav",
-    "reload" : "sfx/reload.wav"
+    "reload" : "sfx/reload.wav",
+    "amb" : "sfx/christmas2.wav",
+    "throw" : "sfx/throw.wav",
+    "nextLevel" : "sfx/nextLevel.wav",
+    "death": "sfx/death.wav"
   };
 
   Audio() {
@@ -61,6 +65,7 @@ class Audio {
         AudioBuffer buffer = bufferList[i];
         String name = names[i];
         buffers[name] = buffer;
+        print("${name}");
       }
     });
     bufferLoader.load();
@@ -68,17 +73,26 @@ class Audio {
 }
 
 class AudioController {
-  static void play(String name) {
+  static void playLoop(String name, bool loop) {
     AudioBufferSourceNode source = audio.audioContext.createBufferSource();
-    source.buffer = audio.buffers[name];
+    if (source != null && audio != null && audio.buffers != null) {
+      source.buffer = audio.buffers[name];
+      if (source.buffer != null) {
+        BiquadFilterNode filter = audio.audioContext.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 5000;
 
-    BiquadFilterNode filter = audio.audioContext.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 5000;
+        source.connectNode(filter, 0, 0);
+        filter.connectNode(audio.audioContext.destination, 0, 0);
 
-    source.connectNode(filter, 0, 0);
-    filter.connectNode(audio.audioContext.destination, 0, 0);
-
-    source.start(0);
+        source.start(0);
+        if (loop) {
+          source.loop = true;
+        }
+      }
+    }
+  }
+  static void play(String name) {
+    playLoop(name, false);
   }
 }
