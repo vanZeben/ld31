@@ -7,6 +7,7 @@ import 'package:vector_math/vector_math.dart';
 import 'dart:math';
 import 'dart:async';
 import 'dart:web_audio';
+import 'package:game_loop/game_loop_html.dart';
 
 part 'audio.dart';
 part 'shader.dart';
@@ -22,6 +23,9 @@ Random random = new Random();
 int GAME_WIDTH = 650;
 int GAME_HEIGHT = 488;
 int GAME_SIZE_SCALE = 2;
+
+int RENDER_RATE = 30;
+
 List<bool> keys = new List<bool>(256);
 Texture bgSheet;
 
@@ -94,14 +98,19 @@ class Game {
   List<Projectile> projectileList = new List<Projectile>();
   Sprite bg;
   Player player;
+
+  GameLoopHtml gameLoop;
+
   List<Entity> entities = new List<Entity>();
   Game() {
     instance = this;
     canvas = querySelector("#game");
     canvas.setAttribute("width", "${GAME_WIDTH}px");
     canvas.setAttribute("height", "${GAME_HEIGHT}px");
+
     resize();
     gl = canvas.getContext("webgl");
+    gameLoop = new GameLoopHtml(canvas);
     window.onResize.listen((event) => resize());
     if (gl == null) gl = canvas.getContext("experimental-webgl");
     if (gl == null) { noWebGL(); }
@@ -109,15 +118,16 @@ class Game {
     for (int i=0; i <256;i++) keys[i] = false;
     window.onKeyDown.listen((e) {
       if (e.keyCode<256) keys[e.keyCode] = true;
+      e.preventDefault();
     });
     window.onKeyUp.listen((e) {
       if (e.keyCode<256) keys[e.keyCode] = false;
+      e.preventDefault();
     });
     canvas.onMouseDown.listen((e) {
       if (paused) {
         paused = !paused;
         pauseSprite.a = 0.0;
-        window.requestAnimationFrame(render);
       }
       if (died) {
         died = false;
@@ -132,7 +142,6 @@ class Game {
     });
     window.onFocus.listen((e) {
       paused = false;
-      window.requestAnimationFrame(render);
       pauseSprite.a = 0.0;
     });
   }
@@ -192,7 +201,7 @@ class Game {
   void start() {
     viewMatrix =  makeOrthographicMatrix(0.0, GAME_WIDTH, GAME_HEIGHT, 0.0, -10.0, 10.0).scale(GAME_SIZE_SCALE+0.0, GAME_SIZE_SCALE+0.0, 1.0);
     bgViewMatrix = makeOrthographicMatrix(0.0, GAME_WIDTH, GAME_HEIGHT, 0.0, -10.0, 10.0).scale(GAME_SIZE_SCALE+0.0, GAME_SIZE_SCALE+0.0, 1.0);
-    sunViewMatrix = makeOrthographicMatrix(0.0, GAME_WIDTH, GAME_HEIGHT, 0.0, -10.0, 10.0).scale(GAME_SIZE_SCALE*2.0, GAME_SIZE_SCALE*2.0, 1.0).translate((GAME_WIDTH/(GAME_SIZE_SCALE*2))/4-15, 45.0, 0.0);
+    sunViewMatrix = makeOrthographicMatrix(0.0, GAME_WIDTH, GAME_HEIGHT, 0.0, -10.0, 10.0).scale(GAME_SIZE_SCALE*2.0, GAME_SIZE_SCALE*2.0, 1.0).translate((GAME_WIDTH/(GAME_SIZE_SCALE*2))/4-35, 80.0, 0.0);
     Texture spriteSheet = new Texture("tex/sprites.png");
     Texture blankSheet = new Texture("tex/blank.png");
     Texture skyboxSheet = new Texture("tex/skybox.png");
@@ -303,7 +312,11 @@ class Game {
       diedSprite = new Sprite(125.0, 100.0, 48.0, 48.0, 4.0, 0.0, 1.0, 1.0, 1.0, 0.0);
       overlaySprites.addSprite(diedSprite);
       spawnEnemies();
-      window.requestAnimationFrame(render);
+//      requestAnimFrame();
+
+    gameLoop.addTimer(render,  0.001, periodic: true);
+
+    gameLoop.start();
   }
 
   void clear() {
@@ -357,7 +370,7 @@ class Game {
   bool scaling = false;
   double offs = 0.0;
   double movingCooldown = 0.0;
-  double introDelay = 2000.0;
+  double introDelay = 5000.0;
   double lastTreeUpdateTime = 0.0;
   int waveDelay = 0;
   double lastWaveTime = 0.0;
@@ -390,7 +403,9 @@ class Game {
     diedSprite.a = 1.0;
   }
 
-  void render(double time) {
+
+  void render(GameLoopTimer timer) {
+    double time = timer.gameLoop.gameTime*1000;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
@@ -535,12 +550,13 @@ class Game {
       snowSprites.render(bgViewMatrix);
 
       overlaySprites.render(bgViewMatrix);
-
-      window.requestAnimationFrame(render);
     } else {
       overlaySprites.render(bgViewMatrix);
     }
+  }
 
+  void requestAnimFrame() {
+//    window.animationFrame.then(render);
   }
 
   void noWebGL() {

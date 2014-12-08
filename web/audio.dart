@@ -65,7 +65,6 @@ class Audio {
         AudioBuffer buffer = bufferList[i];
         String name = names[i];
         buffers[name] = buffer;
-        print("${name}");
       }
     });
     bufferLoader.load();
@@ -75,7 +74,7 @@ class Audio {
 class AudioController {
   static void playLoop(String name, bool loop) {
     AudioBufferSourceNode source = audio.audioContext.createBufferSource();
-    if (source != null && audio != null && audio.buffers != null) {
+    if (name != null && source != null && audio != null && audio.buffers != null) {
       source.buffer = audio.buffers[name];
       if (source.buffer != null) {
         BiquadFilterNode filter = audio.audioContext.createBiquadFilter();
